@@ -1,0 +1,23 @@
+version: '3.7'
+services:
+  web:
+    build: .
+    volumes:
+      - ./app/:/usr/src/app/
+    ports:
+      - 8000:8000
+    command: uvicorn --host 0.0.0.0 app:app
+    environment:
+      - POSTGRES_HOST=db
+    depends_on:
+      - db
+  db:
+    image: postgres:12.0-alpine
+    volumes:
+      - postgres_data:/var/lib/postgresql/data/
+    environment:
+      - POSTGRES_USER=postgres
+      - POSTGRES_PASSWORD=postgres
+      - POSTGRES_DB=poliv
+volumes:
+  postgres_data:

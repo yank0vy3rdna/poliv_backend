@@ -1,0 +1,200 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Watering settings</title>
+    <script src="https://unpkg.com/cookielib/src/cookie.min.js"></script> <!-- Mobile Specific Metas
+  –––––––––––––––––––––––––––––––––––––––––––––––––– -->
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+
+    <!-- FONT
+    –––––––––––––––––––––––––––––––––––––––––––––––––– -->
+    <link href="//fonts.googleapis.com/css?family=Raleway:400,300,600" rel="stylesheet" type="text/css">
+
+    <!-- CSS
+    –––––––––––––––––––––––––––––––––––––––––––––––––– -->
+    <link rel="stylesheet" href="css/normalize.css">
+    <link rel="stylesheet" href="css/skeleton.css">
+</head>
+<body>
+<div class="container">
+    <br>
+    <div class="row">
+        <div class="six columns">
+            <h2>Настройка полива</h2>
+        </div>
+        <div class="six columns">
+            <input type="button" onclick="deleteCookie('bearer_token');window.location.replace('index.html')"
+                   value="Разлогиниться">
+        </div>
+    </div>
+    <h3>Текущее состояние</h3>
+    <input type="button" id="big_button" onclick="onSwitch()" value="Включить">
+    <div id="current_state">
+        Система: выключена <br>
+        Полив: выключен <br>
+        Наполнение бочки: выключено<br>
+        Последнее обновление: <br>
+    </div>
+
+    <h3>Правила</h3>
+    <div class="row">
+        <div class="six columns">
+            <input type="button" onclick="window.location.replace('edit.html?id=')" value="Добавить правило">
+        </div>
+    </div>
+    <div id="table_div"></div>
+</div>
+<script>
+    function createTable(tableData) {
+        var table = document.createElement('table');
+        var tableBody = document.createElement('tbody');
+
+        tableData.forEach(function (rowData) {
+            var row = document.createElement('tr');
+
+            rowData.forEach(function (cellData) {
+                var cell = document.createElement('td');
+                cell.innerHTML = cellData;
+                row.appendChild(cell);
+            });
+
+            tableBody.appendChild(row);
+        });
+
+        table.appendChild(tableBody);
+        document.getElementById("table_div").appendChild(table);
+    }
+
+    let update_data = () => {
+        fetch('device/1', {
+            headers: {'Authorization': 'Bearer ' + token}
+        }).then((resp) => {
+            if (resp.status === 401)
+                window.location.replace('login.html')
+            else if (resp.status === 200) {
+                resp.json().then((data) => {
+                    let str_to_html = ''
+                    if (data.enabled) {
+                        str_to_html += '<div style="border-color: green; border-style: solid;">'
+                    } else {
+                        str_to_html += '<div style="border-color: red; border-style: solid;">'
+                    }
+                    str_to_html += 'Система: '
+                    if (data.enabled) {
+                        str_to_html += 'включена'
+                        document.getElementById('big_button').value = 'Выключить'
+                    } else {
+                        str_to_html += 'выключена'
+                        document.getElementById('big_button').value = 'Включить'
+                    }
+                    str_to_html += '</div><br>'
+                    let info = data.info_from_device
+                    let splt1 = info.split("&")
+                    for (let i in splt1) {
+                        let splt = splt1[i].split('=')
+                        let key = splt[0]
+                        let value = splt[1]
+                        if (key === 'p6') {
+                            if (value === 'yes') {
+                                str_to_html += '<div style="border-color: green; border-style: solid;">'
+                            } else {
+                                str_to_html += '<div style="border-color: red; border-style: solid;">'
+                            }
+                            str_to_html += 'Полив: '
+                            if (value === 'yes') {
+                                str_to_html += 'включен'
+                            } else {
+                                str_to_html += 'выключен'
+                            }
+                            str_to_html += "</div><br>"
+                        }
+                        if (key === 'p7') {
+
+                            if (value === 'yes') {
+                                str_to_html += '<div style="border-color: green; border-style: solid;">'
+                            } else {
+                                str_to_html += '<div style="border-color: red; border-style: solid;">'
+                            }
+                            str_to_html += 'Наполнение бочки: '
+                            if (value === 'yes') {
+                                str_to_html += 'включено'
+                            } else {
+                                str_to_html += 'выключено'
+                            }
+                            str_to_html += "</div><br>"
+                        }
+                        if (key === 'date') {
+                            str_to_html += 'Последнее обновление: ' + value + "</div><br>"
+                        }
+                    }
+                    document.getElementById("current_state").innerHTML = str_to_html
+                })
+            }
+        })
+    }
+    let token = getCookie('bearer_token')
+    update_data()
+    setInterval(update_data, 3000)
+    fetch('rules/1', {
+        headers: {'Authorization': 'Bearer ' + token}
+    }).then((resp) => {
+        if (resp.status === 401)
+            window.location.replace('login.html')
+        else if (resp.status === 200) {
+            resp.json().then((data) => {
+                const table = [['ID', 'Час', 'Минута']]
+                for (let i in data) {
+                    table.push([
+                        data[i].id,
+                        data[i].hour,
+                        data[i].minute,
+                        '<input onClick="window.location=\'edit.html?id=' + data[i].id + '\'" type="button" value="Редактировать"/> <input onClick="delete_rule(' + data[i].id + ')" type="button" value="Удалить"/>',
+                    ])
+                }
+                createTable(table);
+            })
+        } else {
+            alert('Server error')
+        }
+    })
+
+    function delete_rule(rule_id) {
+        fetch('rule?rule_id=' + rule_id + '&device_id=1', {
+            method: "DELETE",
+            headers: {
+                'Authorization': 'Bearer ' + token,
+            }
+        }).then((resp) => {
+                if (resp.status === 401)
+                    window.location.replace('login.html')
+                else if (resp.status === 200) {
+                    window.location.replace('index.html')
+                } else {
+                    alert('Server error')
+                }
+            }
+        )
+    }
+
+    function onSwitch() {
+        fetch('switch/1', {
+            method: "POST",
+            headers: {
+                'Authorization': 'Bearer ' + token,
+            }
+        }).then((resp) => {
+                if (resp.status === 401)
+                    window.location.replace('login.html')
+                else if (resp.status === 200) {
+                    window.location.replace('index.html')
+                } else {
+                    alert('Server error')
+                }
+            }
+        )
+    }
+
+</script>
+</body>
+</html>

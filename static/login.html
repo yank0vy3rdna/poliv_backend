@@ -1,0 +1,66 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Watering settings</title>
+    <script src="https://unpkg.com/cookielib/src/cookie.min.js"></script> <!-- Mobile Specific Metas
+  –––––––––––––––––––––––––––––––––––––––––––––––––– -->
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+
+    <!-- FONT
+    –––––––––––––––––––––––––––––––––––––––––––––––––– -->
+    <link href="//fonts.googleapis.com/css?family=Raleway:400,300,600" rel="stylesheet" type="text/css">
+
+    <!-- CSS
+    –––––––––––––––––––––––––––––––––––––––––––––––––– -->
+    <link rel="stylesheet" href="css/normalize.css">
+    <link rel="stylesheet" href="css/skeleton.css">
+</head>
+<body>
+<div class="container">
+    <h1>Login</h1>
+
+    <form action="token" method="post" id="login_form">
+        <div class="row">
+            <label for="uname"><b>Username</b></label>
+            <input type="text" placeholder="Enter Username" name="username" id="uname" required>
+        </div>
+
+        <div class="row">
+            <label for="psw"><b>Password</b></label>
+            <input type="password" placeholder="Enter Password" name="password" id="psw" required>
+        </div>
+
+        <div class="row">
+            <button type="submit">Login</button>
+        </div>
+    </form>
+</div>
+<script>
+    let form = document.getElementById('login_form')
+    form.addEventListener('submit', login);
+
+    function login(e) {
+        e.preventDefault()
+        let formdata = new FormData(document.getElementById("login_form"))
+        const data = [...formdata.entries()];
+        const asString = data
+            .map(x => `${encodeURIComponent(x[0])}=${encodeURIComponent(x[1])}`)
+            .join('&');
+        fetch("token", {
+            body: asString,
+            headers: {
+                "Content-Type": "application/x-www-form-urlencoded",
+                // "Content-Type": "multipart/form-data",
+            },
+            method: "post",
+        }).then((res) => res.json().then((data) => {
+            if ('access_token' in data) {
+                setCookie('bearer_token', data['access_token'])
+                window.location.replace('index.html')
+            }
+        }))
+    }
+</script>
+</body>
+</html>

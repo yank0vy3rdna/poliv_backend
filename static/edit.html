@@ -1,0 +1,104 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Watering settings</title>
+    <script src="https://unpkg.com/cookielib/src/cookie.min.js"></script>  <!-- Mobile Specific Metas
+  –––––––––––––––––––––––––––––––––––––––––––––––––– -->
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+
+    <!-- FONT
+    –––––––––––––––––––––––––––––––––––––––––––––––––– -->
+    <link href="//fonts.googleapis.com/css?family=Raleway:400,300,600" rel="stylesheet" type="text/css">
+
+    <!-- CSS
+    –––––––––––––––––––––––––––––––––––––––––––––––––– -->
+    <link rel="stylesheet" href="css/normalize.css">
+    <link rel="stylesheet" href="css/skeleton.css">
+
+</head>
+<body>
+<div class="container">
+    <h1>Редактирование правила</h1>
+    <form>
+
+        <div class="row">
+            <div class="three columns">
+                <label for="hour">Час</label><input type="text" id="hour" class="form-control" name="firstname"
+                                                    placeholder="Час..">
+            </div>
+            <div class="six columns">
+                <label for="minute">Минута</label><input type="text" id="minute" name="firstname" class="form-control"
+                                                         placeholder="Минута..">
+            </div>
+        </div>
+        <div class="row">
+            <div class="two columns">
+                <input type="button" class="btn btn-info" onclick="save()" value="Сохранить">
+            </div>
+            <div class="six columns">
+                <input type="button" class="btn btn-outline-danger" onclick="window.location.replace('index.html')"
+                       value="Назад">
+            </div>
+        </div>
+    </form>
+</div>
+<script>
+
+    function getQueryVariable(variable) {
+        var query = window.location.search.substring(1);
+        var vars = query.split("&");
+        for (var i = 0; i < vars.length; i++) {
+            var pair = vars[i].split("=");
+            if (pair[0] === variable) {
+                return pair[1];
+            }
+        }
+        return ""
+    }
+
+    let rule_id = getQueryVariable("id");
+    if (rule_id !== '') {
+        let token = getCookie('bearer_token')
+        fetch('rule/1/' + rule_id, {
+            headers: {'Authorization': 'Bearer ' + token}
+        }).then((resp) => {
+                if (resp.status === 401)
+                    window.location.replace('login.html')
+                else if (resp.status === 200) {
+                    resp.json().then((data) => {
+                        document.getElementById('hour').value = data['hour']
+                        document.getElementById('minute').value = data['minute']
+                    })
+                }
+            }
+        )
+    }
+
+    function save() {
+        let token = getCookie('bearer_token')
+        fetch('rule/1?rule_id=' + (rule_id !== '' ? rule_id : '-1'), {
+            method: 'PATCH',
+            headers: {
+                'Authorization': 'Bearer ' + token,
+                'Accept': 'application/json',
+                'Content-Type': 'application/json'
+            },
+            body: JSON.stringify({
+                minute: document.getElementById('minute').value,
+                hour: document.getElementById('hour').value
+            })
+        }).then((resp) => {
+                if (resp.status === 401)
+                    window.location.replace('login.html')
+                else if (resp.status === 200) {
+                    window.location.replace('index.html')
+                } else {
+                    alert('Server error')
+                }
+            }
+        )
+    }
+</script>
+</body>
+</html>
