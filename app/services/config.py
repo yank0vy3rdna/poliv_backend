@@ -16,5 +16,6 @@ ALGORITHM = env.str("ALGORITHM", default="HS256")
 POLIV_RELAY_PIN = env.int("POLIV_RELAY_PIN", default=6)
 NABOR_RELAY_PIN = env.int("NABOR_RELAY_PIN", default=7)
 
-TIME_OF_POLIV = env.int("TIME_OF_POLIV", default=40)
+TIME_OF_POLIV = env.int("TIME_OF_POLIV", default=5)
 TIME_OF_NABOR = env.int("TIME_OF_NABOR", default=20)
+TIME_OF_DELAY = env.int("TIME_OF_DELAY", default=35)
